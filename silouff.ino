@@ -91,7 +91,7 @@ const unsigned char bitmap_bbb [] PROGMEM = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0, 0x00, 0x00, 0x7f, 0xff, 0xff, 0xff, 0xff
 };
-//http://javl.github.io/image2cpp/
+// http://javl.github.io/image2cpp/
 // Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 1040)
 const int bitmap_allArray_LEN = 1;
 const unsigned char* bitmap_allArray[1] = {
@@ -137,9 +137,9 @@ void setup() {
      display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
 
   display.clearDisplay();
-  display.setTextSize(1); // Tamanho
-  display.setTextColor(1); // Cor
-  display.setCursor(56, 4); // Cursor pode ir de 0,0 a 128,32
+  display.setTextSize(1);
+  display.setTextColor(1);
+  display.setCursor(56, 4);
   display.print("PET");
   display.setTextSize(1);
   display.setTextColor(1);
