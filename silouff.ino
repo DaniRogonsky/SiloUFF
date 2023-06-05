@@ -1,4 +1,3 @@
-#include <SD.h>
 #include <SPI.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
@@ -6,6 +5,8 @@
 #include <Adafruit_SSD1306.h>
 #include <RtcDS1302.h>
 #include <ThreeWire.h>  
+#include <ESP8266WiFi.h>
+#include "ThingSpeak.h"
 
 #define SCREEN_WIDTH 128 // Largura do display
 #define SCREEN_HEIGHT 32 // Altura do display
@@ -24,6 +25,15 @@ Adafruit_BME280 bme0;
 Adafruit_BME280 bme1;
 Adafruit_BME280 bme2;
 Adafruit_BME280 bme3;
+
+const char* ssid = "XXXXXXXX";  
+const char* password = "XXXXXXXX"; 
+WiFiClient  client;
+unsigned long myChannelNumber = 1;
+const char * myWriteAPIKey = "XXXXXXXXXXXX";
+unsigned long lastTime = 0;
+unsigned long timerDelay = 30000;
+float t;
 
 const unsigned char bitmap_bbb [] PROGMEM = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfe, 0x1f, 0x80, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff, 0xff, 
@@ -91,8 +101,7 @@ const unsigned char bitmap_bbb [] PROGMEM = {
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80, 0x00, 0x00, 0x01, 0xff, 0xff, 0xff, 0xff, 
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xc0, 0x00, 0x00, 0x7f, 0xff, 0xff, 0xff, 0xff
 };
-// http://javl.github.io/image2cpp/
-// Array of all bitmaps for convenience. (Total bytes used to store images in PROGMEM = 1040)
+//http://javl.github.io/image2cpp/
 const int bitmap_allArray_LEN = 1;
 const unsigned char* bitmap_allArray[1] = {
 	bitmap_bbb
@@ -135,11 +144,40 @@ void setup() {
   tcaselect(4);
      delay(20);
      display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS);
+  
+  WiFi.mode(WIFI_STA); 
+  ThingSpeak.begin(client);
+}
 
+void loop() { 
+
+  if ((millis() - lastTime) > timerDelay) {
+    if(WiFi.status() != WL_CONNECTED){
+      Serial.print("Attempting to connect");
+      while(WiFi.status() != WL_CONNECTED) {
+        WiFi.begin(ssid, password); 
+        delay(5000);     
+      } 
+      Serial.println("\nConnected.");
+    }
+    tcaselect(0);
+    t = bme0.readTemperature();
+
+  int x = ThingSpeak.writeField(myChannelNumber, 1, t, myWriteAPIKey);     
+       if(x == 200) {
+         Serial.println("Channel update successful.");
+       }
+       else {
+         Serial.println("Problem updating channel. HTTP error code " + String(x));
+       }  
+    lastTime = millis();
+  }
+
+  RtcDateTime now = Rtc.GetDateTime();
   display.clearDisplay();
-  display.setTextSize(1);
-  display.setTextColor(1);
-  display.setCursor(56, 4);
+  display.setTextSize(1); // Tamanho
+  display.setTextColor(1); // Cor
+  display.setCursor(56, 4); // Cursor pode ir de 0,0 a 128,32
   display.print("PET");
   display.setTextSize(1);
   display.setTextColor(1);
@@ -151,14 +189,6 @@ void setup() {
   display.print("e Ambiental");
   display.display();
   delay(5000);
-  display.clearDisplay();
-  display.drawBitmap(0, 0, bitmap_bbb, 128, 64, 1);
-  display.display();
-  delay(1000);
-}
-
-void loop() { 
-  RtcDateTime now = Rtc.GetDateTime();
   printValues0();
   delay(3000);
   printValues1();
